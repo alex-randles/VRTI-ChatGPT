@@ -1,0 +1,77 @@
+PREFIX crm: <http://erlangen-crm.org/current/>
+PREFIX vrti:  <https://ont.virtualtreasury.ie/ontology#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
+SELECT DISTINCT ?Person ?FirstName ?SurnameLabel ?Name  ?DeathDate ?BirthDate ?BirthPlace ?DeathPlace ?Interest ?Occupation
+WHERE {
+    ?Person  a crm:E21_Person;
+                crm:P2_has_type ?CRM_Type .
+    ?Person  crm:P1_is_identified_by ?FirstName ;
+                crm:P1_is_identified_by ?SurnameResource;
+                crm:P1_is_identified_by ?NameResource;
+                crm:P2_has_type ?Gender  .
+    ?FirstName crm:P2_has_type vrti:Forename ;
+                    rdfs:label ?FirstNameLabel  .
+
+    ?SurnameResource crm:P2_has_type vrti:Surname ;
+                    rdfs:label ?SurnameLabel  .
+
+    ?NameResource crm:P2_has_type vrti:Name ;
+        rdfs:label ?Names .
+
+    OPTIONAL {
+            ?Person crm:P1_is_identified_by ?NameVariant .
+            ?NameVariant  crm:P2_has_type  vrti:NameVariant;
+                        rdfs:label ?VariantLabel .
+    }
+    BIND ( COALESCE(?VariantLabel, "") As ?VariantLabel)
+    BIND(CONCAT(?FirstNameLabel, " ", ?SurnameLabel, " ", ?VariantLabel) AS ?Name ) .
+
+    ?Birth a crm:E67_Birth;
+            crm:P98_brought_into_life  ?Person  .
+    ?Birth   	crm:P4_has_time-span  ?BirthInfo .
+    ?BirthInfo  crm:P81a_end_of_the_begin ?BirthDate .
+
+
+    OPTIONAL { ?Person foaf:depiction ?Image }
+    #OPTIONAL {
+        ?Death a crm:E69_Death;
+                crm:P93_took_out_of_existence  ?Person .
+        ?Death   	crm:P4_has_time-span  ?DeathInfo .
+        ?DeathInfo  crm:P81a_end_of_the_begin ?DeathDate .
+
+    OPTIONAL {
+        ?Occupation crm:P2_has_type vrti:Occupation;
+        crm:P107_has_current_or_former_member ?Person .
+    }
+    OPTIONAL {
+        ?Office crm:P2_has_type vrti:Office;
+                crm:P107_has_current_or_former_member ?Person .
+    }
+    OPTIONAL {
+        ?Organisation crm:P2_has_type vrti:Organisation;
+                crm:P107_has_current_or_former_member ?Person .
+    }
+    OPTIONAL {
+            ?Person vrti:DIB_area_of_interest ?Interest.
+
+    }
+    OPTIONAL {
+            ?Birth crm:P7_took_place_at  ?BirthPlace .
+    }
+    OPTIONAL {
+            ?Death crm:P7_took_place_at  ?DeathPlace .
+    }
+    OPTIONAL {
+            ?Person  crm:P71i_is_listed_in  ?DIB_Page  .
+            ?DIB_Page	crm:P2_has_type vrti:DIB .
+    }
+
+    # added by translating users question by extracting entity name in key-value pairs {"Name": "Michael Collins"} using ChatGPT
+    FILTER ( CONTAINS(LCASE(STR(?Name)), LCASE("Michael"))  && CONTAINS(LCASE(STR(?Name)), LCASE("Collins"))   )
+}
+
+ORDER BY ?Name

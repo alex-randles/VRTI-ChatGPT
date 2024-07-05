@@ -70,7 +70,7 @@ WHERE {
             ?DIB_Page	crm:P2_has_type vrti:DIB .
     }
 
-    # added by translating users question by extracting entity name in key-value pairs {"Name": "Michael Collins"} using ChatGPT
+    # added by translating users question into key-value pairs {"Name": "Michael Collins"} using ChatGPT
     FILTER ( CONTAINS(LCASE(STR(?Name)), LCASE("Michael"))  && CONTAINS(LCASE(STR(?Name)), LCASE("Collins"))   )
 }
 
